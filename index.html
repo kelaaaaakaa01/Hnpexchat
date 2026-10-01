@@ -1,570 +1,318 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0b0e14">
-  <meta name="description" content="Mentra Chat — username based messenger">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Mentra Chat</title>
 
-  <style>
-    .main-toolbar{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:14px 18px;
-      border-bottom:1px solid var(--line);
-      background:#0d131ce8;
-      backdrop-filter:blur(16px)
-    }
-
-    .toolbar-title{
-      margin-right:auto
-    }
-
-    .toolbar-title small{
-      display:block;
-      color:var(--muted);
-      font-size:10px;
-      margin-top:3px
-    }
-
-    .toolbar-actions{
-      display:flex;
-      gap:6px
-    }
-
-    .tool-btn{
-      border:1px solid var(--line);
-      background:#151c27;
-      color:var(--text);
-      border-radius:12px;
-      padding:9px 11px;
-      cursor:pointer;
-      font-weight:800
-    }
-
-    .tool-btn:hover{
-      border-color:var(--accent);
-      color:var(--accent)
-    }
-
-    .quick-actions{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-      width:min(760px,100%);
-      margin-top:10px
-    }
-
-    .quick-card{
-      border:1px solid var(--line);
-      background:#111822;
-      color:var(--text);
-      border-radius:16px;
-      padding:16px;
-      cursor:pointer;
-      transition:.18s;
-      text-align:left
-    }
-
-    .quick-card:hover{
-      transform:translateY(-2px);
-      border-color:#64718a
-    }
-
-    .quick-card b{
-      display:block;
-      margin-top:8px
-    }
-
-    .quick-card span{
-      color:var(--muted);
-      font-size:11px
-    }
-
-    .feature-view{
-      overflow:auto
-    }
-
-    .feature-list{
-      width:min(760px,100%);
-      display:grid;
-      gap:10px
-    }
-
-    .feature-row{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      padding:14px;
-      border:1px solid var(--line);
-      background:#111822;
-      border-radius:16px
-    }
-
-    .feature-row .grow{
-      flex:1;
-      min-width:0
-    }
-
-    .feature-row small{
-      display:block;
-      color:var(--muted);
-      margin-top:4px
-    }
-
-    .danger-btn{
-      border:1px solid #5b2934;
-      background:#24131a;
-      color:#ff8496;
-      border-radius:11px;
-      padding:9px 12px;
-      cursor:pointer
-    }
-
-    .modal{
-      position:fixed;
-      inset:0;
-      background:#0009;
-      display:grid;
-      place-items:center;
-      padding:18px;
-      z-index:100;
-      backdrop-filter:blur(7px)
-    }
-
-    .modal-card{
-      width:min(520px,100%);
-      max-height:90vh;
-      overflow:auto;
-      background:#111720;
-      border:1px solid #344055;
-      border-radius:22px;
-      padding:22px;
-      box-shadow:0 30px 100px #000b
-    }
-
-    .modal-head{
-      display:flex;
-      align-items:center;
-      margin-bottom:16px
-    }
-
-    .modal-head h3{
-      margin:0;
-      font-family:Space Grotesk;
-      font-size:22px
-    }
-
-    .modal-close{
-      margin-left:auto;
-      border:0;
-      background:none;
-      color:var(--muted);
-      font-size:28px;
-      cursor:pointer
-    }
-
-    .modal-form{
-      display:grid;
-      gap:12px
-    }
-
-    .modal-form label{
-      display:grid;
-      gap:7px;
-      color:#aeb7c6;
-      font-size:12px;
-      font-weight:800
-    }
-
-    .modal-form input,
-    .modal-form textarea{
-      width:100%;
-      background:#0b1017;
-      border:1px solid var(--line);
-      color:var(--text);
-      border-radius:13px;
-      padding:12px;
-      outline:none
-    }
-
-    .modal-form textarea{
-      min-height:90px;
-      resize:vertical
-    }
-
-    .modal-form input:focus,
-    .modal-form textarea:focus{
-      border-color:var(--accent)
-    }
-
-    .search-result{
-      margin:0 14px 8px;
-      padding:8px;
-      background:#111822;
-      border:1px solid var(--line);
-      border-radius:14px
-    }
-
-    .search-result .conversation-item{
-      padding:8px
-    }
-
-    .search-result button{
-      margin-left:auto
-    }
-
-    .call-card video{
-      width:100%;
-      aspect-ratio:16/10;
-      object-fit:cover;
-      background:#05070a;
-      border-radius:16px
-    }
-
-    .call-status{
-      color:var(--muted);
-      font-size:12px;
-      margin:10px 0
-    }
-
-    .call-actions{
-      display:flex;
-      gap:8px
-    }
-
-    .call-actions button{
-      flex:1
-    }
-
-    .profile-extra{
-      display:grid;
-      gap:8px;
-      margin-top:18px
-    }
-
-    .profile-extra .stat{
-      display:flex;
-      justify-content:space-between;
-      padding:10px 12px;
-      background:#141b25;
-      border:1px solid var(--line);
-      border-radius:12px;
-      color:#aab4c4;
-      font-size:12px
-    }
-
-    .profile-extra b{
-      color:var(--text)
-    }
-
-    @media(max-width:800px){
-      .main-toolbar{
-        padding:11px 12px
-      }
-
-      .quick-actions{
-        grid-template-columns:1fr
-      }
-
-      .toolbar-actions .tool-btn{
-        padding:8px
-      }
-
-      .feature-view{
-        padding:30px 16px
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
 
-<div id="app">
-
-  <div class="noise"></div>
-
-  <!-- AUTH -->
-  <section id="auth" class="auth-shell">
-
-    <div class="brand-mark">M</div>
+  <!-- ================= AUTH ================= -->
+  <section id="authScreen" class="auth-shell">
 
     <div class="auth-card">
 
-      <div class="eyebrow">MENTRA NETWORK</div>
-
-      <h1>
-        Chat tanpa harus<br>
-        <span>berbagi nomor.</span>
-      </h1>
-
-      <p class="muted">
-        Daftar dengan nomor HP, username, dan password.
-        Username menjadi identitas untuk login dan mencari teman.
-      </p>
-
-      <div class="tabs">
-        <button class="tab active" data-auth="login" type="button">
-          Masuk
-        </button>
-
-        <button class="tab" data-auth="register" type="button">
-          Daftar
-        </button>
+      <div class="auth-logo">
+        <div class="logo-mark">M</div>
+        <div>
+          <h1>Mentra Chat</h1>
+          <p>Private messaging made simple.</p>
+        </div>
       </div>
 
       <!-- LOGIN -->
-      <form id="login-form" class="form">
+      <div id="loginView" class="auth-view">
 
-        <label>
-          Username
-          <input
-            id="login-username"
-            autocomplete="username"
-            placeholder="@username"
-            required
-          >
-        </label>
+        <div class="auth-heading">
+          <h2>Welcome Back</h2>
+          <p>Login menggunakan username dan password.</p>
+        </div>
 
-        <label>
-          Password
-          <input
-            id="login-password"
-            type="password"
-            autocomplete="current-password"
-            placeholder="Password"
-            required
-          >
-        </label>
+        <form id="loginForm">
 
-        <button class="primary" type="submit">
-          Masuk ke Mentra
-          <b>↗</b>
+          <label>
+            Username
+            <input
+              id="loginUsername"
+              type="text"
+              autocomplete="username"
+              placeholder="Masukkan username"
+              required
+            >
+          </label>
+
+          <label>
+            Password
+            <input
+              id="loginPassword"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Masukkan password"
+              required
+            >
+          </label>
+
+          <button type="submit" class="primary-btn">
+            Login
+          </button>
+
+        </form>
+
+        <button id="showRegisterBtn" type="button" class="text-btn">
+          Belum punya akun? Register
         </button>
 
-      </form>
+      </div>
+
 
       <!-- REGISTER -->
-      <form id="register-form" class="form hidden">
+      <div id="registerView" class="auth-view hidden">
 
-        <label>
-          Nomor HP
-          <input
-            id="reg-phone"
-            inputmode="tel"
-            autocomplete="tel"
-            placeholder="+62 812..."
-            required
-          >
-        </label>
+        <div class="auth-heading">
+          <h2>Create Account</h2>
+          <p>Buat akun Mentra Chat tanpa OTP.</p>
+        </div>
 
-        <label>
-          Username
-          <input
-            id="reg-username"
-            autocomplete="username"
-            placeholder="username"
-            maxlength="24"
-            required
-          >
-        </label>
+        <form id="registerForm">
 
-        <label>
-          Password
-          <input
-            id="reg-password"
-            type="password"
-            autocomplete="new-password"
-            placeholder="Minimal 8 karakter"
-            minlength="8"
-            required
-          >
-        </label>
+          <label>
+            Nomor HP
+            <input
+              id="registerPhone"
+              type="tel"
+              autocomplete="tel"
+              placeholder="08xxxxxxxxxx"
+              required
+            >
+          </label>
 
-        <button
-          class="primary"
-          id="register-btn"
-          type="submit"
-        >
-          Buat akun & masuk
-          <b>↗</b>
+          <label>
+            Username
+            <input
+              id="registerUsername"
+              type="text"
+              autocomplete="username"
+              placeholder="username"
+              minlength="3"
+              required
+            >
+          </label>
+
+          <label>
+            Password
+            <input
+              id="registerPassword"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Minimal 6 karakter"
+              minlength="6"
+              required
+            >
+          </label>
+
+          <button type="submit" class="primary-btn">
+            Create Account
+          </button>
+
+        </form>
+
+        <button id="showLoginBtn" type="button" class="text-btn">
+          Sudah punya akun? Login
         </button>
 
-      </form>
+      </div>
 
-      <p id="auth-status" class="status"></p>
-
-    </div>
-
-    <div class="legal">
-      Mentra Chat • Firebase powered
     </div>
 
   </section>
 
 
-  <!-- CHAT APPLICATION -->
-  <section id="chat-app" class="chat-shell hidden">
+  <!-- ================= MAIN APP ================= -->
+  <section id="appScreen" class="app hidden">
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
 
-      <header class="side-head">
+      <div class="sidebar-top">
 
-        <div class="mini-logo">
-          M
+        <div class="brand">
+          <div class="logo-mark">M</div>
+
+          <div>
+            <strong>Mentra</strong>
+            <span>Chat</span>
+          </div>
         </div>
 
-        <div>
-          <strong>Mentra</strong>
-          <small>comic messenger</small>
-        </div>
-
-        <button
-          id="profile-btn"
-          class="icon-btn"
-          title="Profil"
-        >
-          ◉
+        <button id="profileBtn" class="icon-btn" type="button" title="Profile">
+          ☰
         </button>
-
-      </header>
-
-
-      <!-- SEARCH -->
-      <div class="search">
-
-        <span>⌕</span>
-
-        <input
-          id="user-search"
-          placeholder="Cari username..."
-          autocomplete="off"
-        >
 
       </div>
 
-      <div
-        id="search-result"
-        class="search-result hidden"
-      ></div>
+
+      <!-- CURRENT ACCOUNT -->
+      <div class="account-mini">
+
+        <div id="currentAvatar" class="avatar">
+          M
+        </div>
+
+        <div class="account-info">
+
+          <strong id="currentUsername">
+            Username
+          </strong>
+
+          <span id="currentBio">
+            Available
+          </span>
+
+        </div>
+
+      </div>
 
 
-      <!-- NAVIGATION -->
-      <nav class="side-nav">
+      <!-- SEARCH -->
+      <div class="search-box">
+
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Search username..."
+          autocomplete="off"
+        >
+
+        <button id="searchBtn" type="button">
+          Search
+        </button>
+
+      </div>
+
+
+      <!-- SEARCH RESULT -->
+      <div id="searchResults" class="search-results"></div>
+
+
+      <!-- SIDEBAR NAV -->
+      <nav class="sidebar-nav">
 
         <button
-          class="nav active"
-          data-view="chats"
+          id="navChats"
+          class="nav-item active"
+          type="button"
         >
-          Chat
-          <i id="chat-count"></i>
+          <span>Chats</span>
         </button>
 
         <button
-          class="nav"
-          data-view="status"
+          id="navGroups"
+          class="nav-item"
+          type="button"
         >
-          Status
+          <span>Groups</span>
         </button>
 
         <button
-          class="nav"
-          data-view="channels"
+          id="navChannels"
+          class="nav-item"
+          type="button"
         >
-          Saluran
+          <span>Channels</span>
         </button>
 
         <button
-          class="nav"
-          data-view="groups"
+          id="navStatus"
+          class="nav-item"
+          type="button"
         >
-          Grup
+          <span>Status</span>
         </button>
 
       </nav>
 
 
       <!-- CHAT LIST -->
-      <div
-        id="conversation-list"
-        class="conversation-list"
-      ></div>
+      <div class="sidebar-section">
+
+        <div class="section-title">
+          <span>Your Chats</span>
+
+          <button
+            id="addContactBtn"
+            type="button"
+            class="small-btn"
+            title="Tambah kontak"
+          >
+            +
+          </button>
+        </div>
+
+        <div id="chatList" class="chat-list">
+
+          <div id="emptyChatState" class="empty-state">
+            <strong>No chats yet</strong>
+            <span>Tambah kontak menggunakan username untuk mulai chat.</span>
+          </div>
+
+        </div>
+
+      </div>
 
 
-      <footer class="side-foot">
-
-        <span id="me-label">
-          @username
-        </span>
+      <!-- BOTTOM MENU -->
+      <div class="sidebar-bottom">
 
         <button
-          id="logout"
-          class="text-btn"
+          id="settingsBtn"
+          class="nav-item"
+          type="button"
         >
-          Keluar
+          Settings
         </button>
 
-      </footer>
+        <button
+          id="logoutBtn"
+          class="nav-item danger"
+          type="button"
+        >
+          Logout
+        </button>
+
+      </div>
 
     </aside>
 
 
-    <!-- MAIN -->
-    <main class="main-panel">
+    <!-- ================= MAIN CONTENT ================= -->
+    <main class="main">
 
-      <!-- HOME -->
-      <section
-        id="home-view"
-        class="empty-chat"
-      >
+      <!-- EMPTY / HOME -->
+      <section id="homePanel" class="panel home-panel">
 
-        <div class="comic-burst">
-          MENTRA!
-        </div>
+        <div class="home-content">
 
-        <h2>
-          Semua obrolan lu ada di sini.
-        </h2>
+          <div class="home-logo">
+            M
+          </div>
 
-        <p>
-          Tambahkan teman lewat username,
-          cari percakapan, bikin grup,
-          atau buka saluran.
-        </p>
+          <h1>Mentra Chat</h1>
 
-
-        <div class="quick-actions">
+          <p>
+            Select a conversation or add a contact
+            using their username.
+          </p>
 
           <button
-            class="quick-card"
-            data-action="add-contact"
+            id="homeAddContactBtn"
+            type="button"
+            class="primary-btn"
           >
-            <span>CONTACT</span>
-            <b>＋ Tambah kontak</b>
-          </button>
-
-
-          <button
-            class="quick-card"
-            data-action="new-group"
-          >
-            <span>GROUP</span>
-            <b>＋ Buat grup</b>
-          </button>
-
-
-          <button
-            class="quick-card"
-            data-action="new-channel"
-          >
-            <span>CHANNEL</span>
-            <b>＋ Buat saluran</b>
+            Add Contact
           </button>
 
         </div>
@@ -572,66 +320,50 @@
       </section>
 
 
-      <!-- CHAT -->
-      <section
-        id="conversation"
-        class="conversation hidden"
-      >
+      <!-- ================= CHAT PANEL ================= -->
+      <section id="chatPanel" class="panel chat-panel hidden">
 
-        <header class="chat-head">
+        <header class="chat-header">
 
-          <button
-            id="mobile-back"
-            class="icon-btn"
-            title="Kembali"
-          >
-            ‹
-          </button>
+          <div class="chat-user">
 
-          <div
-            class="avatar"
-            id="chat-avatar"
-          >
-            ?
-          </div>
+            <div id="chatAvatar" class="avatar">
+              U
+            </div>
 
-          <div class="chat-person">
+            <div>
 
-            <strong id="chat-name">
-              Username
-            </strong>
+              <strong id="chatTitle">
+                Username
+              </strong>
 
-            <span id="chat-presence">
-              Mentra Chat
-            </span>
+              <span id="chatSubtitle">
+                @username
+              </span>
+
+            </div>
 
           </div>
 
 
-          <div class="head-actions">
+          <div class="chat-actions">
 
             <button
-              id="voice-call"
+              id="voiceCallBtn"
+              type="button"
               class="icon-btn"
-              title="Panggilan suara"
+              title="Voice Call"
             >
-              ☎
+              Voice
             </button>
 
             <button
-              id="video-call"
+              id="videoCallBtn"
+              type="button"
               class="icon-btn"
-              title="Video call"
+              title="Video Call"
             >
-              ▣
-            </button>
-
-            <button
-              id="chat-info"
-              class="icon-btn"
-              title="Info"
-            >
-              ⋯
+              Video
             </button>
 
           </div>
@@ -639,37 +371,33 @@
         </header>
 
 
-        <div
-          id="messages"
-          class="messages"
-        ></div>
+        <!-- MESSAGES -->
+        <div id="messageList" class="message-list">
+
+          <div class="empty-state">
+            <strong>No messages</strong>
+            <span>Send a message to start the conversation.</span>
+          </div>
+
+        </div>
 
 
-        <form
-          id="message-form"
-          class="composer"
-        >
-
-          <button
-            type="button"
-            id="attach-btn"
-            class="round-btn"
-            title="Lampiran"
-          >
-            ＋
-          </button>
+        <!-- MESSAGE INPUT -->
+        <form id="messageForm" class="message-composer">
 
           <input
-            id="message-input"
-            placeholder="Tulis pesan..."
+            id="messageInput"
+            type="text"
+            placeholder="Write a message..."
             autocomplete="off"
           >
 
           <button
-            class="send"
+            id="sendMessageBtn"
             type="submit"
+            class="primary-btn"
           >
-            ➤
+            Send
           </button>
 
         </form>
@@ -677,271 +405,475 @@
       </section>
 
 
-      <!-- STATUS -->
-      <section
-        id="status-view"
-        class="feature-view hidden"
-      >
+      <!-- ================= GROUP PANEL ================= -->
+      <section id="groupsPanel" class="panel hidden">
 
-        <div class="feature-title">
+        <header class="page-header">
 
-          <span>STATUS</span>
+          <div>
+            <h2>Groups</h2>
+            <p>Create and manage your groups.</p>
+          </div>
 
-          <h2>
-            Potongan cerita hari ini.
-          </h2>
+          <button
+            id="createGroupBtn"
+            type="button"
+            class="primary-btn"
+          >
+            Create Group
+          </button>
+
+        </header>
+
+        <div id="groupList" class="content-list">
+
+          <div class="empty-state">
+            <strong>No groups</strong>
+            <span>Your groups will appear here.</span>
+          </div>
 
         </div>
-
-        <button
-          class="primary small"
-          id="new-status"
-        >
-          ＋ Tambah status
-        </button>
-
-        <div
-          id="status-list"
-          class="feature-list"
-        ></div>
 
       </section>
 
 
-      <!-- CHANNEL -->
-      <section
-        id="channels-view"
-        class="feature-view hidden"
-      >
+      <!-- ================= CHANNEL PANEL ================= -->
+      <section id="channelsPanel" class="panel hidden">
 
-        <div class="feature-title">
+        <header class="page-header">
 
-          <span>SALURAN</span>
+          <div>
+            <h2>Channels</h2>
+            <p>Follow channels and receive updates.</p>
+          </div>
 
-          <h2>
-            Broadcast tanpa berisik.
-          </h2>
+          <button
+            id="createChannelBtn"
+            type="button"
+            class="primary-btn"
+          >
+            Create Channel
+          </button>
+
+        </header>
+
+        <div id="channelList" class="content-list">
+
+          <div class="empty-state">
+            <strong>No channels</strong>
+            <span>Channels will appear here.</span>
+          </div>
 
         </div>
-
-        <button
-          class="primary small"
-          id="new-channel"
-        >
-          ＋ Buat saluran
-        </button>
-
-        <div
-          id="channel-list"
-          class="feature-list"
-        ></div>
 
       </section>
 
 
-      <!-- GROUP -->
-      <section
-        id="groups-view"
-        class="feature-view hidden"
-      >
+      <!-- ================= STATUS PANEL ================= -->
+      <section id="statusPanel" class="panel hidden">
 
-        <div class="feature-title">
+        <header class="page-header">
 
-          <span>GRUP</span>
+          <div>
+            <h2>Status</h2>
+            <p>See updates from your contacts.</p>
+          </div>
 
-          <h2>
-            Ngobrol bareng satu squad.
-          </h2>
+          <button
+            id="createStatusBtn"
+            type="button"
+            class="primary-btn"
+          >
+            Add Status
+          </button>
+
+        </header>
+
+        <div id="statusList" class="content-list">
+
+          <div class="empty-state">
+            <strong>No status</strong>
+            <span>Status updates will appear here.</span>
+          </div>
 
         </div>
 
-        <button
-          class="primary small"
-          id="new-group"
-        >
-          ＋ Buat grup
-        </button>
+      </section>
 
-        <div
-          id="group-list"
-          class="feature-list"
-        ></div>
+
+      <!-- ================= PROFILE PANEL ================= -->
+      <section id="profilePanel" class="panel hidden">
+
+        <header class="page-header">
+
+          <div>
+            <h2>Profile</h2>
+            <p>Manage your Mentra account.</p>
+          </div>
+
+        </header>
+
+
+        <div class="profile-card">
+
+          <div id="profileAvatar" class="profile-avatar">
+            M
+          </div>
+
+          <div class="profile-details">
+
+            <h3 id="profileUsername">
+              Username
+            </h3>
+
+            <p id="profilePhone">
+              Phone
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <form id="profileForm" class="profile-form">
+
+          <label>
+            Bio
+
+            <textarea
+              id="profileBio"
+              rows="4"
+              placeholder="Write something about yourself..."
+            ></textarea>
+
+          </label>
+
+          <button
+            type="submit"
+            class="primary-btn"
+          >
+            Save Profile
+          </button>
+
+        </form>
+
+      </section>
+
+
+      <!-- ================= SETTINGS ================= -->
+      <section id="settingsPanel" class="panel hidden">
+
+        <header class="page-header">
+
+          <div>
+            <h2>Settings</h2>
+            <p>Manage your application settings.</p>
+          </div>
+
+        </header>
+
+        <div class="settings-list">
+
+          <div class="setting-item">
+
+            <div>
+              <strong>Account</strong>
+              <span>Your account uses username and password.</span>
+            </div>
+
+          </div>
+
+          <div class="setting-item">
+
+            <div>
+              <strong>Privacy</strong>
+              <span>Your session ends when the browser session ends.</span>
+            </div>
+
+          </div>
+
+        </div>
 
       </section>
 
     </main>
 
-
-    <!-- PROFILE -->
-    <aside
-      id="profile-panel"
-      class="profile-panel hidden"
-    >
-
-      <button
-        id="close-profile"
-        class="close"
-      >
-        ×
-      </button>
-
-      <div class="profile-cover"></div>
-
-      <div
-        class="profile-avatar"
-        id="profile-avatar"
-      >
-        M
-      </div>
-
-      <h2 id="profile-name">
-        @username
-      </h2>
-
-      <p id="profile-bio">
-        Belum ada bio.
-      </p>
-
-      <label>
-        Bio
-        <input
-          id="bio-input"
-          maxlength="80"
-          placeholder="Tulis bio..."
-        >
-      </label>
-
-      <button
-        id="save-profile"
-        class="primary"
-      >
-        Simpan profil
-      </button>
-
-
-      <div class="profile-extra">
-
-        <div class="stat">
-          <span>Username</span>
-          <b id="profile-username-stat">
-            @-
-          </b>
-        </div>
-
-        <div class="stat">
-          <span>Kontak</span>
-          <b id="profile-contact-stat">
-            0
-          </b>
-        </div>
-
-      </div>
-
-    </aside>
-
   </section>
 
-</div>
 
+  <!-- ================= ADD CONTACT MODAL ================= -->
+  <div
+    id="addContactModal"
+    class="modal hidden"
+    aria-hidden="true"
+  >
 
-<!-- TOAST -->
-<div id="toast" class="toast"></div>
-
-
-<!-- GENERAL MODAL -->
-<div
-  id="modal"
-  class="modal hidden"
->
-
-  <div class="modal-card">
-
-    <div class="modal-head">
-
-      <h3 id="modal-title">
-        Mentra
-      </h3>
+    <div class="modal-card">
 
       <button
-        id="modal-close"
+        id="closeAddContactBtn"
+        type="button"
         class="modal-close"
       >
         ×
       </button>
 
-    </div>
+      <h2>Add Contact</h2>
 
-    <div id="modal-body"></div>
+      <p>
+        Masukkan username teman kamu.
+      </p>
+
+      <form id="addContactForm">
+
+        <label>
+          Username
+
+          <input
+            id="contactUsername"
+            type="text"
+            placeholder="@username"
+            autocomplete="off"
+            required
+          >
+
+        </label>
+
+        <button
+          type="submit"
+          class="primary-btn"
+        >
+          Add Contact
+        </button>
+
+      </form>
+
+    </div>
 
   </div>
 
-</div>
 
+  <!-- ================= CREATE GROUP MODAL ================= -->
+  <div
+    id="groupModal"
+    class="modal hidden"
+    aria-hidden="true"
+  >
 
-<!-- CALL MODAL -->
-<div
-  id="call-modal"
-  class="modal hidden"
->
-
-  <div class="modal-card call-card">
-
-    <div class="modal-head">
-
-      <h3 id="call-title">
-        Panggilan
-      </h3>
+    <div class="modal-card">
 
       <button
-        id="call-close"
+        id="closeGroupModalBtn"
+        type="button"
         class="modal-close"
       >
         ×
       </button>
 
-    </div>
+      <h2>Create Group</h2>
 
-    <video
-      id="local-video"
-      autoplay
-      muted
-      playsinline
-    ></video>
+      <form id="groupForm">
 
-    <div
-      id="call-status"
-      class="call-status"
-    >
-      Menyiapkan perangkat...
-    </div>
+        <label>
+          Group Name
 
-    <div class="call-actions">
+          <input
+            id="groupName"
+            type="text"
+            placeholder="Nama group"
+            required
+          >
 
-      <button
-        id="call-mute"
-        class="tool-btn"
-      >
-        Mute
-      </button>
+        </label>
 
-      <button
-        id="call-hangup"
-        class="danger-btn"
-      >
-        Tutup panggilan
-      </button>
+        <label>
+          Description
+
+          <textarea
+            id="groupDescription"
+            rows="3"
+            placeholder="Deskripsi group"
+          ></textarea>
+
+        </label>
+
+        <button
+          type="submit"
+          class="primary-btn"
+        >
+          Create Group
+        </button>
+
+      </form>
 
     </div>
 
   </div>
 
-</div>
+
+  <!-- ================= CREATE CHANNEL MODAL ================= -->
+  <div
+    id="channelModal"
+    class="modal hidden"
+    aria-hidden="true"
+  >
+
+    <div class="modal-card">
+
+      <button
+        id="closeChannelModalBtn"
+        type="button"
+        class="modal-close"
+      >
+        ×
+      </button>
+
+      <h2>Create Channel</h2>
+
+      <form id="channelForm">
+
+        <label>
+          Channel Name
+
+          <input
+            id="channelName"
+            type="text"
+            placeholder="Nama channel"
+            required
+          >
+
+        </label>
+
+        <label>
+          Description
+
+          <textarea
+            id="channelDescription"
+            rows="3"
+            placeholder="Deskripsi channel"
+          ></textarea>
+
+        </label>
+
+        <button
+          type="submit"
+          class="primary-btn"
+        >
+          Create Channel
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
 
 
-<script
-  type="module"
-  src="script.js"
-></script>
+  <!-- ================= CREATE STATUS MODAL ================= -->
+  <div
+    id="statusModal"
+    class="modal hidden"
+    aria-hidden="true"
+  >
+
+    <div class="modal-card">
+
+      <button
+        id="closeStatusModalBtn"
+        type="button"
+        class="modal-close"
+      >
+        ×
+      </button>
+
+      <h2>Create Status</h2>
+
+      <form id="statusForm">
+
+        <label>
+          Status
+
+          <textarea
+            id="statusText"
+            rows="5"
+            maxlength="500"
+            placeholder="Apa yang sedang kamu pikirkan?"
+            required
+          ></textarea>
+
+        </label>
+
+        <button
+          type="submit"
+          class="primary-btn"
+        >
+          Post Status
+        </button>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= CALL MODAL ================= -->
+  <div
+    id="callModal"
+    class="modal hidden"
+    aria-hidden="true"
+  >
+
+    <div class="call-card">
+
+      <div id="callAvatar" class="profile-avatar">
+        U
+      </div>
+
+      <h2 id="callName">
+        Calling...
+      </h2>
+
+      <p id="callType">
+        Voice Call
+      </p>
+
+      <video
+        id="localVideo"
+        class="local-video hidden"
+        autoplay
+        muted
+        playsinline
+      ></video>
+
+      <div class="call-actions">
+
+        <button
+          id="endCallBtn"
+          type="button"
+          class="danger-btn"
+        >
+          End Call
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ================= TOAST ================= -->
+  <div
+    id="toast"
+    class="toast"
+    role="status"
+    aria-live="polite"
+  ></div>
+
+
+  <!-- Firebase + Application -->
+  <script type="module" src="./script.js"></script>
 
 </body>
 </html>
