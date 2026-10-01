@@ -8,85 +8,45 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function self(uid) {
-      return signedIn()
-        && request.auth.uid == uid;
-    }
-
-
     match /users/{uid} {
-
       allow read: if signedIn();
-
-      allow create, update:
-        if self(uid);
-
+      allow create, update: if signedIn()
+        && request.auth.uid == uid;
       allow delete: if false;
     }
 
+    match /usernames/{username} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if false;
+    }
 
     match /chats/{chatId} {
-
-      allow read, create:
-        if signedIn();
+      allow read, create: if signedIn();
+      allow update, delete: if signedIn();
     }
-
 
     match /chats/{chatId}/messages/{messageId} {
-
-      allow read, create:
-        if signedIn();
-
-      allow update, delete:
-        if false;
+      allow read, create: if signedIn();
+      allow update, delete: if signedIn();
     }
-
 
     match /groups/{groupId} {
-
-      allow read, create:
-        if signedIn();
-
-      allow update, delete:
-        if signedIn();
+      allow read, create, update, delete: if signedIn();
     }
-
 
     match /channels/{channelId} {
-
-      allow read, create:
-        if signedIn();
-
-      allow update, delete:
-        if signedIn();
+      allow read, create, update, delete: if signedIn();
     }
-
 
     match /statuses/{statusId} {
+      allow read: if signedIn();
 
-      allow read:
-        if signedIn();
-
-      allow create:
-        if signedIn()
+      allow create: if signedIn()
         && request.resource.data.ownerId == request.auth.uid;
 
-      allow update, delete:
-        if signedIn()
+      allow update, delete: if signedIn()
         && resource.data.ownerId == request.auth.uid;
-    }
-
-
-    match /usernames/{username} {
-
-      allow read:
-        if signedIn();
-
-      allow create:
-        if signedIn();
-
-      allow update, delete:
-        if signedIn();
     }
   }
 }
