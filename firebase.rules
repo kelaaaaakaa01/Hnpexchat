@@ -1,17 +1,116 @@
 rules_version = '2';
+
 service cloud.firestore {
+
   match /databases/{database}/documents {
-    function signedIn(){ return request.auth != null; }
-    function self(uid){ return signedIn() && request.auth.uid == uid; }
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function self(uid) {
+      return signedIn()
+        && request.auth.uid == uid;
+    }
+
+
+    /* USER */
 
     match /users/{uid} {
+
       allow read: if signedIn();
-      allow create, update: if self(uid);
+
+      allow create, update:
+        if self(uid);
+
       allow delete: if false;
     }
-    match /chats/{chatId}/messages/{messageId} {
-      allow read, create: if signedIn();
-      allow update, delete: if false;
+
+
+    /* PRIVATE CHAT */
+
+    match /chats/{chatId} {
+
+      allow read, create:
+        if signedIn();
+
+      match /messages/{messageId} {
+
+        allow read, create:
+          if signedIn();
+
+        allow update, delete:
+          if false;
+      }
     }
+
+
+    /* GROUP */
+
+    match /groups/{groupId} {
+
+      allow read, create:
+        if signedIn();
+
+      allow update:
+        if signedIn()
+        && (
+          resource.data.ownerId == request.auth.uid
+          ||
+          request.resource.data.ownerId == request.auth.uid
+        );
+
+      allow delete:
+        if signedIn()
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+
+    /* CHANNEL */
+
+    match /channels/{channelId} {
+
+      allow read, create:
+        if signedIn();
+
+      allow update:
+        if signedIn()
+        && (
+          resource.data.ownerId == request.auth.uid
+          ||
+          request.resource.data.ownerId == request.auth.uid
+        );
+
+      allow delete:
+        if signedIn()
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+
+    /* STATUS */
+
+    match /statuses/{statusId} {
+
+      allow read:
+        if signedIn();
+
+      allow create:
+        if signedIn()
+        && request.resource.data.ownerId
+           == request.auth.uid;
+
+      allow update, delete:
+        if signedIn()
+        && resource.data.ownerId
+           == request.auth.uid;
+    }
+
+
+    /* OTP SUDAH TIDAK DIPAKAI */
+
+    match /otpSessions/{id} {
+      allow read, write: if false;
+    }
+
   }
 }
