@@ -1,697 +1,119 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  >
-
-  <meta
-    name="theme-color"
-    content="#0b0f14"
-  >
-
-  <meta
-    name="description"
-    content="Mentra Chat"
-  >
-
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10141d">
+  <meta name="description" content="Mentra Chat — private username-based chat">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
   <title>Mentra Chat</title>
-
-  <link
-    rel="manifest"
-    href="/manifest.webmanifest"
-  >
-
-  <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
+<div id="app">
+  <div class="noise"></div>
+  <section id="auth" class="auth-shell">
+    <div class="brand-mark">M</div>
+    <div class="auth-card">
+      <div class="eyebrow">MENTRA NETWORK</div>
+      <h1>Chat tanpa harus<br><span>berbagi nomor.</span></h1>
+      <p class="muted">Username untuk menemukan teman. Nomor HP dipakai sebagai identitas pendaftaran akun.</p>
 
-  <!-- =====================================================
-       AUTH
-  ====================================================== -->
-
-  <section id="auth">
-
-    <div class="auth-shell">
-
-      <div class="auth-card">
-
-        <div class="auth-brand">
-          <div class="brand-mark">M</div>
-
-          <div>
-            <h1>Mentra</h1>
-            <p>Private messaging</p>
-          </div>
-        </div>
-
-
-        <!-- AUTH TABS -->
-
-        <div class="auth-tabs">
-
-          <button
-            type="button"
-            class="tab active"
-            data-auth="login"
-          >
-            Login
-          </button>
-
-          <button
-            type="button"
-            class="tab"
-            data-auth="register"
-          >
-            Register
-          </button>
-
-        </div>
-
-
-        <!-- =================================================
-             LOGIN FORM
-        ================================================== -->
-
-        <form
-          id="login-form"
-          autocomplete="on"
-        >
-
-          <div class="field">
-
-            <label for="login-username">
-              Username
-            </label>
-
-            <input
-              id="login-username"
-              type="text"
-              name="username"
-              placeholder="username"
-              autocomplete="username"
-              autocapitalize="none"
-              spellcheck="false"
-              required
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="login-password">
-              Password
-            </label>
-
-            <input
-              id="login-password"
-              type="password"
-              name="password"
-              placeholder="Password"
-              autocomplete="current-password"
-              required
-            >
-
-          </div>
-
-
-          <button
-            type="submit"
-            class="primary-btn"
-          >
-            Login
-          </button>
-
-        </form>
-
-
-        <!-- =================================================
-             REGISTER FORM
-        ================================================== -->
-
-        <form
-          id="register-form"
-          class="hidden"
-          autocomplete="on"
-        >
-
-          <div class="field">
-
-            <label for="reg-phone">
-              Nomor HP
-            </label>
-
-            <input
-              id="reg-phone"
-              type="tel"
-              name="phone"
-              placeholder="+628xxxxxxxxxx"
-              autocomplete="tel"
-              required
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="reg-username">
-              Username
-            </label>
-
-            <input
-              id="reg-username"
-              type="text"
-              name="username"
-              placeholder="username"
-              autocomplete="username"
-              autocapitalize="none"
-              spellcheck="false"
-              required
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="reg-password">
-              Password
-            </label>
-
-            <input
-              id="reg-password"
-              type="password"
-              name="password"
-              placeholder="Minimal 8 karakter"
-              autocomplete="new-password"
-              minlength="8"
-              required
-            >
-
-          </div>
-
-
-          <button
-            id="create-account"
-            type="submit"
-            class="primary-btn"
-          >
-            Create Account
-          </button>
-
-        </form>
-
-
-        <!-- AUTH STATUS -->
-
-        <div
-          id="auth-status"
-          class="auth-status"
-          aria-live="polite"
-        ></div>
-
+      <div id="auth-tabs" class="tabs">
+        <button class="tab active" data-auth="login">Masuk</button>
+        <button class="tab" data-auth="register">Daftar</button>
       </div>
 
-    </div>
+      <form id="login-form" class="form">
+        <label>Username<input id="login-username" autocomplete="username" placeholder="@username" required></label>
+        <label>Password<input id="login-password" type="password" autocomplete="current-password" placeholder="Password" required></label>
+        <button class="primary" type="submit">Masuk ke Mentra <b>↗</b></button>
+      </form>
 
+      <form id="register-form" class="form hidden">
+        <label>Nomor HP<input id="reg-phone" inputmode="tel" autocomplete="tel" placeholder="+62 812..." required></label>
+        <label>Username<input id="reg-username" autocomplete="username" placeholder="username" maxlength="24" required></label>
+        <label>Password<input id="reg-password" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter" minlength="8" required></label>
+        <button class="primary" id="create-account" type="submit">Buat akun <b>↗</b></button>
+      </form>
+      <p id="auth-status" class="status"></p>
+    </div>
+    <div class="legal">Mentra Chat • Firebase powered</div>
   </section>
 
+  <section id="chat-app" class="chat-shell hidden">
+    <aside class="sidebar">
+      <header class="side-head">
+        <div class="mini-logo">M</div><div><strong>Mentra</strong><small>comic messenger</small></div>
+        <button id="profile-btn" class="icon-btn" title="Profil">◉</button>
+      </header>
+      <div class="search"><span>⌕</span><input id="user-search" placeholder="Cari username..."></div>
+      <nav class="side-nav">
+        <button class="nav active" data-view="chats">Chats <i id="chat-count"></i></button>
+        <button class="nav" data-view="status">Status</button>
+        <button class="nav" data-view="channels">Saluran</button>
+        <button class="nav" data-view="groups">Grup</button>
+      </nav>
+      <div id="conversation-list" class="conversation-list"></div>
+      <footer class="side-foot"><span id="me-label">@username</span><button id="logout" class="text-btn">Keluar</button></footer>
+    </aside>
 
-  <!-- =====================================================
-       MAIN CHAT APP
-  ====================================================== -->
-
-  <main
-    id="chat-app"
-    class="hidden"
-  >
-
-    <div class="app-shell">
-
-
-      <!-- =================================================
-           SIDEBAR
-      ================================================== -->
-
-      <aside class="sidebar">
-
-        <!-- SIDEBAR HEADER -->
-
-        <div class="sidebar-header">
-
-          <div class="app-title">
-
-            <div class="brand-mark">
-              M
-            </div>
-
-            <div>
-              <strong>Mentra</strong>
-
-              <span>
-                Chat
-              </span>
-            </div>
-
+    <main class="main-panel">
+      <div id="empty-chat" class="empty-chat">
+        <div class="comic-burst">HEY!</div>
+        <h2>Pilih obrolan</h2>
+        <p>Cari username di panel kiri untuk mulai ngobrol.</p>
+      </div>
+      <section id="conversation" class="conversation hidden">
+        <header class="chat-head">
+          <div class="avatar" id="chat-avatar">?</div>
+          <div class="chat-person"><strong id="chat-name">Username</strong><span id="chat-presence">online</span></div>
+          <div class="head-actions">
+            <button class="icon-btn" title="Panggilan suara">☎</button>
+            <button class="icon-btn" title="Video call">▣</button>
+            <button class="icon-btn" title="Info">⋯</button>
           </div>
-
-
-          <button
-            id="profile-btn"
-            type="button"
-            class="icon-btn"
-            aria-label="Profile"
-          >
-            <span>•••</span>
-          </button>
-
-        </div>
-
-
-        <!-- CURRENT USER -->
-
-        <div class="current-user">
-
-          <div class="avatar">
-            M
-          </div>
-
-          <div class="current-user-info">
-
-            <strong id="me-label">
-              @user
-            </strong>
-
-            <small>
-              Online
-            </small>
-
-          </div>
-
-        </div>
-
-
-        <!-- SEARCH -->
-
-        <div class="search-box">
-
-          <input
-            id="user-search"
-            type="search"
-            placeholder="Cari username..."
-            autocomplete="off"
-            autocapitalize="none"
-            spellcheck="false"
-          >
-
-        </div>
-
-
-        <!-- NAVIGATION -->
-
-        <nav class="sidebar-nav">
-
-          <button
-            type="button"
-            class="nav active"
-            data-view="chats"
-          >
-            <span class="nav-icon">C</span>
-            <span>Chats</span>
-          </button>
-
-
-          <button
-            type="button"
-            class="nav"
-            data-view="status"
-          >
-            <span class="nav-icon">S</span>
-            <span>Status</span>
-          </button>
-
-
-          <button
-            type="button"
-            class="nav"
-            data-view="channels"
-          >
-            <span class="nav-icon">N</span>
-            <span>Channels</span>
-          </button>
-
-
-          <button
-            type="button"
-            class="nav"
-            data-view="groups"
-          >
-            <span class="nav-icon">G</span>
-            <span>Groups</span>
-          </button>
-
-        </nav>
-
-
-        <!-- CONVERSATION LIST -->
-
-        <div
-          id="conversation-list"
-          class="conversation-list"
-        ></div>
-
-
-        <!-- SIDEBAR FOOTER -->
-
-        <div class="sidebar-footer">
-
-          <button
-            id="logout"
-            type="button"
-            class="logout-btn"
-          >
-            Logout
-          </button>
-
-        </div>
-
-      </aside>
-
-
-      <!-- =================================================
-           MAIN CONTENT
-      ================================================== -->
-
-      <section class="main-content">
-
-
-        <!-- =================================================
-             EMPTY CHAT
-        ================================================== -->
-
-        <section
-          id="empty-chat"
-          class="empty-chat"
-        >
-
-          <div class="empty-chat-inner">
-
-            <div class="empty-icon">
-              M
-            </div>
-
-            <h2>
-              Welcome to Mentra
-            </h2>
-
-            <p>
-              Pilih percakapan atau cari username
-              untuk mulai mengobrol.
-            </p>
-
-          </div>
-
-        </section>
-
-
-        <!-- =================================================
-             CONVERSATION
-        ================================================== -->
-
-        <section
-          id="conversation"
-          class="conversation hidden"
-        >
-
-
-          <!-- CHAT HEADER -->
-
-          <header class="conversation-header">
-
-            <div class="chat-user">
-
-              <div
-                id="chat-avatar"
-                class="avatar"
-              >
-                U
-              </div>
-
-
-              <div class="chat-user-info">
-
-                <strong id="chat-name">
-                  @user
-                </strong>
-
-                <small id="chat-presence">
-                  offline
-                </small>
-
-              </div>
-
-            </div>
-
-          </header>
-
-
-          <!-- MESSAGES -->
-
-          <div
-            id="messages"
-            class="messages"
-          ></div>
-
-
-          <!-- MESSAGE FORM -->
-
-          <form
-            id="message-form"
-            class="message-form"
-            autocomplete="off"
-          >
-
-            <input
-              id="message-input"
-              type="text"
-              placeholder="Tulis pesan..."
-              autocomplete="off"
-              maxlength="5000"
-            >
-
-            <button
-              type="submit"
-              class="send-btn"
-            >
-              Send
-            </button>
-
-          </form>
-
-        </section>
-
-
-        <!-- =================================================
-             STATUS VIEW
-        ================================================== -->
-
-        <section
-          id="status-view"
-          class="content-view hidden"
-        >
-
-          <div class="content-view-inner">
-
-            <h2>Status</h2>
-
-            <p>
-              Status teman dan aktivitas terbaru
-              akan muncul di sini.
-            </p>
-
-          </div>
-
-        </section>
-
-
-        <!-- =================================================
-             CHANNELS VIEW
-        ================================================== -->
-
-        <section
-          id="channels-view"
-          class="content-view hidden"
-        >
-
-          <div class="content-view-inner">
-
-            <h2>Channels</h2>
-
-            <p>
-              Channel Mentra akan tersedia di sini.
-            </p>
-
-          </div>
-
-        </section>
-
-
-        <!-- =================================================
-             GROUPS VIEW
-        ================================================== -->
-
-        <section
-          id="groups-view"
-          class="content-view hidden"
-        >
-
-          <div class="content-view-inner">
-
-            <h2>Groups</h2>
-
-            <p>
-              Group conversation akan tersedia di sini.
-            </p>
-
-          </div>
-
-        </section>
-
+        </header>
+        <div id="messages" class="messages"></div>
+        <form id="message-form" class="composer">
+          <button type="button" class="round-btn" title="Lampiran">＋</button>
+          <input id="message-input" placeholder="Tulis pesan..." autocomplete="off">
+          <button class="send" type="submit">➤</button>
+        </form>
       </section>
 
-    </div>
+      <section id="status-view" class="feature-view hidden">
+        <div class="feature-title"><span>STATUS</span><h2>Potongan cerita hari ini.</h2></div>
+        <div class="status-compose"><div class="avatar big">+</div><div><strong>Status saya</strong><small>Tambah foto, teks, atau video</small></div></div>
+        <div class="placeholder-grid"><article>STATUS<br><b>24h</b></article><article>COMING<br><b>SOON</b></article></div>
+      </section>
 
-  </main>
+      <section id="channels-view" class="feature-view hidden">
+        <div class="feature-title"><span>SALURAN</span><h2>Broadcast tanpa berisik.</h2></div>
+        <button class="primary small">＋ Buat saluran</button>
+        <div class="placeholder-card">Channel engine siap disambungkan ke Firestore.</div>
+      </section>
 
+      <section id="groups-view" class="feature-view hidden">
+        <div class="feature-title"><span>GRUP</span><h2>Ngobrol bareng satu squad.</h2></div>
+        <button class="primary small">＋ Buat grup</button>
+        <div class="placeholder-card">Group chat, role admin, invite link, dan media dapat diaktifkan di tahap berikutnya.</div>
+      </section>
+    </main>
 
-  <!-- =====================================================
-       PROFILE PANEL
-  ====================================================== -->
+    <aside id="profile-panel" class="profile-panel hidden">
+      <button id="close-profile" class="close">×</button>
+      <div class="profile-cover"></div>
+      <div class="profile-avatar" id="profile-avatar">M</div>
+      <h2 id="profile-name">@username</h2>
+      <p id="profile-bio">Belum ada bio.</p>
+      <label>Bio<input id="bio-input" maxlength="80" placeholder="Tulis bio..."></label>
+      <button id="save-profile" class="primary">Simpan profil</button>
+    </aside>
+  </section>
+</div>
 
-  <aside
-    id="profile-panel"
-    class="profile-panel hidden"
-  >
-
-    <div class="profile-card">
-
-
-      <!-- PROFILE HEADER -->
-
-      <div class="profile-header">
-
-        <div>
-
-          <h2>
-            Profile
-          </h2>
-
-          <p>
-            Account information
-          </p>
-
-        </div>
-
-
-        <button
-          id="close-profile"
-          type="button"
-          class="icon-btn"
-          aria-label="Close"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <!-- PROFILE AVATAR -->
-
-      <div class="profile-avatar-wrap">
-
-        <div
-          id="profile-avatar"
-          class="profile-avatar"
-        >
-          M
-        </div>
-
-      </div>
-
-
-      <!-- PROFILE NAME -->
-
-      <div class="profile-info">
-
-        <strong id="profile-name">
-          @user
-        </strong>
-
-        <span id="profile-bio">
-          Belum ada bio.
-        </span>
-
-      </div>
-
-
-      <!-- BIO -->
-
-      <div class="field">
-
-        <label for="bio-input">
-          Bio
-        </label>
-
-        <textarea
-          id="bio-input"
-          rows="4"
-          maxlength="160"
-          placeholder="Tulis bio..."
-        ></textarea>
-
-      </div>
-
-
-      <!-- SAVE -->
-
-      <button
-        id="save-profile"
-        type="button"
-        class="primary-btn"
-      >
-        Save Profile
-      </button>
-
-    </div>
-
-  </aside>
-
-
-  <!-- =====================================================
-       TOAST
-  ====================================================== -->
-
-  <div
-    id="toast"
-    class="toast"
-    aria-live="polite"
-  ></div>
-
-
-  <!-- =====================================================
-       FIREBASE / APP SCRIPT
-  ====================================================== -->
-
-  <script
-    type="module"
-    src="/script.js"
-  ></script>
-
+<div id="toast" class="toast"></div>
+<script type="module" src="script.js"></script>
 </body>
 </html>
