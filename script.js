@@ -1,6 +1,4 @@
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 
 import {
   getAuth,
@@ -14,17 +12,17 @@ import {
 import {
   getFirestore,
   doc,
-  setDoc,
   getDoc,
+  setDoc,
   collection,
   addDoc,
   query,
   where,
   orderBy,
   onSnapshot,
-  serverTimestamp,
+  getDocs,
   limit,
-  getDocs
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 
@@ -32,7 +30,7 @@ import {
    FIREBASE CONFIG
 ========================================================= */
 
-const FIREBASE_CONFIG = {
+const firebaseConfig = {
   apiKey: "AIzaSyCABFYMEsfwOI5hvZALTqoFsameHqq5QXI",
   authDomain: "fire-chat-c043f.firebaseapp.com",
   projectId: "fire-chat-c043f",
@@ -42,24 +40,18 @@ const FIREBASE_CONFIG = {
   measurementId: "G-LW21XL2YRK"
 };
 
-
-/* =========================================================
-   INITIALIZE FIREBASE
-========================================================= */
-
-const app = initializeApp(FIREBASE_CONFIG);
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 
 /* =========================================================
-   GLOBAL STATE
+   STATE
 ========================================================= */
 
 let me = null;
 let activeChat = null;
 let unsubscribeMessages = null;
-let unsubscribeAuth = null;
 
 
 /* =========================================================
@@ -70,36 +62,7 @@ const $ = (id) => document.getElementById(id);
 
 
 /* =========================================================
-   SAFE STATUS / TOAST
-========================================================= */
-
-function setStatus(message = "") {
-  const el = $("auth-status");
-
-  if (el) {
-    el.textContent = message;
-  }
-}
-
-
-function toast(message) {
-  const el = $("toast");
-
-  if (!el) return;
-
-  el.textContent = message;
-  el.classList.add("show");
-
-  clearTimeout(toast.timer);
-
-  toast.timer = setTimeout(() => {
-    el.classList.remove("show");
-  }, 2500);
-}
-
-
-/* =========================================================
-   USERNAME / EMAIL
+   USERNAME
 ========================================================= */
 
 function normalizeUsername(value) {
@@ -109,23 +72,122 @@ function normalizeUsername(value) {
     .replace(/^@/, "");
 }
 
-
 function emailForUsername(username) {
   return `${normalizeUsername(username)}@users.mentra.local`;
 }
 
 
 /* =========================================================
-   FIREBASE ERROR TRANSLATION
+   STATUS
+========================================================= */
+
+function setStatus(message = "") {
+  const element = $("auth-status");
+
+  if (element) {
+    element.textContent = message;
+  }
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function toast(message = "") {
+  const element = $("toast");
+
+  if (!element) return;
+
+  element.textContent = message;
+  element.classList.add("show");
+
+  clearTimeout(window.__mentraToastTimer);
+
+  window.__mentraToastTimer = setTimeout(() => {
+    element.classList.remove("show");
+  }, 2500);
+}
+
+
+/* =========================================================
+   SHOW AUTH
+========================================================= */
+
+function showAuth() {
+
+  const authPage = $("auth");
+  const chatApp = $("chat-app");
+
+  if (authPage) {
+    authPage.classList.remove("hidden");
+  }
+
+  if (chatApp) {
+    chatApp.classList.add("hidden");
+  }
+}
+
+
+/* =========================================================
+   SHOW CHAT
+========================================================= */
+
+function showChat() {
+
+  const authPage = $("auth");
+  const chatApp = $("chat-app");
+
+  /*
+   * PENTING:
+   * LOGIN BERHASIL = LANGSUNG BUKA CHAT.
+   * Tidak menunggu Firestore.
+   */
+
+  if (authPage) {
+    authPage.classList.add("hidden");
+  }
+
+  if (chatApp) {
+    chatApp.classList.remove("hidden");
+  }
+
+  const emptyChat = $("empty-chat");
+  const conversation = $("conversation");
+
+  if (emptyChat) {
+    emptyChat.classList.remove("hidden");
+  }
+
+  if (conversation) {
+    conversation.classList.add("hidden");
+  }
+
+  $("status-view")?.classList.add("hidden");
+  $("channels-view")?.classList.add("hidden");
+  $("groups-view")?.classList.add("hidden");
+
+  document.querySelectorAll(".nav").forEach((button) => {
+    button.classList.remove("active");
+  });
+
+  document
+    .querySelector('.nav[data-view="chats"]')
+    ?.classList.add("active");
+}
+
+
+/* =========================================================
+   FIREBASE ERROR
 ========================================================= */
 
 function firebaseError(error) {
 
-  console.error("Firebase error:", error);
+  console.error("[FIREBASE ERROR]", error);
 
   const code = error?.code || "";
 
-  const errors = {
+  const messages = {
 
     "auth/invalid-credential":
       "Username atau password salah.",
@@ -143,10 +205,10 @@ function firebaseError(error) {
       "Terlalu banyak percobaan login. Coba lagi nanti.",
 
     "auth/network-request-failed":
-      "Koneksi ke Firebase gagal. Periksa internet.",
+      "Koneksi ke Firebase gagal.",
 
     "auth/user-disabled":
-      "Akun ini telah dinonaktifkan.",
+      "Akun ini dinonaktifkan.",
 
     "auth/operation-not-allowed":
       "Login Email/Password belum diaktifkan di Firebase.",
@@ -155,254 +217,171 @@ function firebaseError(error) {
       "Format akun tidak valid.",
 
     "permission-denied":
-      "Akses Firestore ditolak oleh Firebase Rules."
+      "Firebase Rules menolak akses.",
+
+    "failed-precondition":
+      "Firestore membutuhkan konfigurasi/index tambahan."
 
   };
 
-  return errors[code] || error?.message || "Terjadi kesalahan Firebase.";
+  return (
+    messages[code] ||
+    error?.message ||
+    "Terjadi kesalahan."
+  );
 }
 
 
 /* =========================================================
-   BUTTON LOADING
+   AUTH TABS
 ========================================================= */
 
-function setButtonLoading(button, loading, loadingText) {
+document
+  .querySelectorAll(".tab")
+  .forEach((button) => {
 
-  if (!button) return;
+    button.addEventListener("click", () => {
 
-  if (loading) {
+      document
+        .querySelectorAll(".tab")
+        .forEach((item) => {
+          item.classList.remove("active");
+        });
 
-    if (!button.dataset.originalText) {
-      button.dataset.originalText = button.innerHTML;
-    }
+      button.classList.add("active");
 
-    button.disabled = true;
+      const mode = button.dataset.auth;
 
-    if (loadingText) {
-      button.innerHTML = loadingText;
-    }
+      $("login-form")?.classList.toggle(
+        "hidden",
+        mode !== "login"
+      );
 
-  } else {
+      $("register-form")?.classList.toggle(
+        "hidden",
+        mode !== "register"
+      );
 
-    button.disabled = false;
+      setStatus("");
+    });
 
-    if (button.dataset.originalText) {
-      button.innerHTML = button.dataset.originalText;
-    }
-  }
-}
-
-
-/* =========================================================
-   AUTH TAB
-========================================================= */
-
-document.querySelectorAll(".tab").forEach((button) => {
-
-  button.addEventListener("click", () => {
-
-    document
-      .querySelectorAll(".tab")
-      .forEach((item) => item.classList.remove("active"));
-
-    button.classList.add("active");
-
-    const isLogin = button.dataset.auth === "login";
-
-    $("login-form")?.classList.toggle("hidden", !isLogin);
-    $("register-form")?.classList.toggle("hidden", isLogin);
-
-    setStatus("");
   });
-
-});
 
 
 /* =========================================================
    REGISTER
 ========================================================= */
 
-$("register-form")?.addEventListener("submit", async (event) => {
+$("register-form")?.addEventListener(
+  "submit",
+  async (event) => {
 
-  event.preventDefault();
+    event.preventDefault();
 
-  const phone = $("reg-phone")?.value.trim() || "";
-  const username = normalizeUsername(
-    $("reg-username")?.value || ""
-  );
-  const password = $("reg-password")?.value || "";
+    const phone =
+      $("reg-phone")?.value.trim() || "";
 
-  if (!phone) {
-    setStatus("Nomor HP wajib diisi.");
-    return;
-  }
-
-  if (!username) {
-    setStatus("Username wajib diisi.");
-    return;
-  }
-
-  if (!/^[a-z0-9._]{3,24}$/.test(username)) {
-    setStatus(
-      "Username 3-24 karakter. Gunakan huruf, angka, titik, atau underscore."
-    );
-    return;
-  }
-
-  if (password.length < 8) {
-    setStatus("Password minimal 8 karakter.");
-    return;
-  }
-
-  const button = $("create-account");
-
-  setButtonLoading(
-    button,
-    true,
-    "Membuat akun..."
-  );
-
-  setStatus("Membuat akun...");
-
-  try {
-
-    const response = await fetch("/api/create-account", {
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        phone,
-        username,
-        password
-      })
-    });
-
-
-    const data = await response
-      .json()
-      .catch(() => ({}));
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        `Server error (${response.status})`
+    const username =
+      normalizeUsername(
+        $("reg-username")?.value || ""
       );
+
+    const password =
+      $("reg-password")?.value || "";
+
+
+    if (!phone) {
+      setStatus("Nomor HP wajib diisi.");
+      return;
     }
 
 
-    if (!data.email) {
-      throw new Error(
-        "Server berhasil membuat akun tetapi email login tidak diterima."
-      );
+    if (!username) {
+      setStatus("Username wajib diisi.");
+      return;
     }
 
 
-    setStatus("Akun berhasil dibuat. Masuk ke akun...");
+    if (!/^[a-z0-9._]{3,24}$/.test(username)) {
+
+      setStatus(
+        "Username 3-24 karakter. Gunakan huruf, angka, titik, atau underscore."
+      );
+
+      return;
+    }
 
 
-    await signInWithEmailAndPassword(
-      auth,
-      data.email,
-      password
-    );
+    if (password.length < 8) {
+
+      setStatus(
+        "Password minimal 8 karakter."
+      );
+
+      return;
+    }
 
 
-    toast("Akun berhasil dibuat");
+    const button =
+      $("create-account");
 
+    if (button) {
+      button.disabled = true;
+    }
 
-  } catch (error) {
-
-    console.error("REGISTER ERROR:", error);
 
     setStatus(
-      error.message ||
-      "Gagal membuat akun."
-    );
-
-  } finally {
-
-    setButtonLoading(
-      button,
-      false
-    );
-  }
-
-});
-
-
-/* =========================================================
-   LOGIN
-========================================================= */
-
-$("login-form")?.addEventListener("submit", async (event) => {
-
-  event.preventDefault();
-
-  const username = normalizeUsername(
-    $("login-username")?.value || ""
-  );
-
-  const password =
-    $("login-password")?.value || "";
-
-
-  if (!username) {
-
-    setStatus("Username wajib diisi.");
-
-    $("login-username")?.focus();
-
-    return;
-  }
-
-
-  if (!password) {
-
-    setStatus("Password wajib diisi.");
-
-    $("login-password")?.focus();
-
-    return;
-  }
-
-
-  const button =
-    $("login-form")?.querySelector(
-      'button[type="submit"]'
+      "Membuat akun..."
     );
 
 
-  setButtonLoading(
-    button,
-    true,
-    "Memeriksa akun..."
-  );
+    try {
+
+      const response = await fetch(
+        "/api/create-account",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            phone,
+            username,
+            password
+          })
+        }
+      );
 
 
-  setStatus(
-    "Menghubungkan ke Firebase..."
-  );
+      const data =
+        await response
+          .json()
+          .catch(() => ({}));
 
 
-  try {
+      if (!response.ok) {
 
-    const email =
-      emailForUsername(username);
+        throw new Error(
+          data.error ||
+          `Gagal membuat akun (${response.status})`
+        );
 
-
-    console.log(
-      "Login Firebase:",
-      email
-    );
+      }
 
 
-    const credential =
+      const email =
+        data.email ||
+        emailForUsername(username);
+
+
+      setStatus(
+        "Akun berhasil dibuat. Login..."
+      );
+
+
       await signInWithEmailAndPassword(
         auth,
         email,
@@ -410,153 +389,380 @@ $("login-form")?.addEventListener("submit", async (event) => {
       );
 
 
-    console.log(
-      "Login berhasil:",
-      credential.user.uid
-    );
+      /*
+       * Langsung buka Chat.
+       */
+
+      showChat();
+
+      setStatus("");
+
+      toast(
+        "Akun berhasil dibuat"
+      );
 
 
-    setStatus(
-      "Login berhasil. Membuka Mentra..."
-    );
+    } catch (error) {
 
+      console.error(
+        "[REGISTER ERROR]",
+        error
+      );
 
-    toast("Login berhasil");
+      setStatus(
+        error.message ||
+        "Gagal membuat akun."
+      );
 
+    } finally {
 
-  } catch (error) {
+      if (button) {
+        button.disabled = false;
+      }
 
-    console.error(
-      "LOGIN ERROR:",
-      error
-    );
-
-
-    setStatus(
-      firebaseError(error)
-    );
-
-
-  } finally {
-
-    setButtonLoading(
-      button,
-      false
-    );
+    }
 
   }
-
-});
+);
 
 
 /* =========================================================
-   AUTH PERSISTENCE
+   LOGIN
 ========================================================= */
 
-async function setupAuthPersistence() {
+$("login-form")?.addEventListener(
+  "submit",
+  async (event) => {
 
-  try {
+    event.preventDefault();
 
-    await setPersistence(
-      auth,
-      browserLocalPersistence
+
+    const username =
+      normalizeUsername(
+        $("login-username")?.value || ""
+      );
+
+    const password =
+      $("login-password")?.value || "";
+
+
+    if (!username) {
+
+      setStatus(
+        "Username wajib diisi."
+      );
+
+      $("login-username")?.focus();
+
+      return;
+    }
+
+
+    if (!password) {
+
+      setStatus(
+        "Password wajib diisi."
+      );
+
+      $("login-password")?.focus();
+
+      return;
+    }
+
+
+    const button =
+      $("login-form")
+        ?.querySelector(
+          'button[type="submit"]'
+        );
+
+
+    if (button) {
+      button.disabled = true;
+    }
+
+
+    setStatus(
+      "Menghubungkan ke Firebase..."
     );
 
-  } catch (error) {
 
-    console.error(
-      "Auth persistence error:",
-      error
-    );
+    try {
+
+      const email =
+        emailForUsername(username);
+
+
+      console.log(
+        "[LOGIN] mencoba:",
+        email
+      );
+
+
+      /*
+       * LOGIN FIREBASE
+       */
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+
+      console.log(
+        "[LOGIN] berhasil"
+      );
+
+
+      /*
+       * JANGAN TUNGGU FIRESTORE.
+       * LANGSUNG MASUK CHAT.
+       */
+
+      showChat();
+
+      setStatus("");
+
+      toast(
+        "Login berhasil"
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "[LOGIN ERROR]",
+        error
+      );
+
+      setStatus(
+        firebaseError(error)
+      );
+
+    } finally {
+
+      if (button) {
+        button.disabled = false;
+      }
+
+    }
 
   }
+);
 
-}
+
+/* =========================================================
+   FIREBASE AUTH PERSISTENCE
+========================================================= */
+
+setPersistence(
+  auth,
+  browserLocalPersistence
+)
+.catch((error) => {
+
+  console.warn(
+    "[AUTH PERSISTENCE]",
+    error
+  );
+
+});
 
 
 /* =========================================================
    AUTH STATE
 ========================================================= */
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(
+  auth,
+  async (user) => {
 
-  try {
+    console.log(
+      "[AUTH STATE]",
+      user
+        ? user.uid
+        : "SIGNED OUT"
+    );
+
+
+    /*
+     * LOGOUT
+     */
 
     if (!user) {
 
       me = null;
       activeChat = null;
 
-      $("auth")?.classList.remove("hidden");
-      $("chat-app")?.classList.add("hidden");
+
+      if (unsubscribeMessages) {
+
+        unsubscribeMessages();
+
+        unsubscribeMessages = null;
+
+      }
+
+
+      showAuth();
 
       return;
     }
 
 
-    console.log(
-      "Firebase user:",
-      user.uid
-    );
+    /*
+     * USER LOGIN
+     *
+     * LANGSUNG BUKA CHAT.
+     */
+
+    showChat();
 
 
-    const userRef =
-      doc(db, "users", user.uid);
-
-
-    const snapshot =
-      await getDoc(userRef);
-
-
-    if (!snapshot.exists()) {
-
-      console.error(
-        "User Firestore tidak ditemukan:",
-        user.uid
-      );
-
-
-      setStatus(
-        "Data akun tidak ditemukan di database."
-      );
-
-
-      await signOut(auth);
-
-      return;
-    }
-
+    /*
+     * PROFILE DEFAULT
+     */
 
     me = {
+
       uid: user.uid,
-      ...snapshot.data()
+
+      username:
+        normalizeUsername(
+          user.email?.split("@")[0] ||
+          "user"
+        ),
+
+      phone: "",
+
+      bio: "",
+
+      photoURL: "",
+
+      status: "online"
+
     };
 
 
-    $("auth")?.classList.add("hidden");
-    $("chat-app")?.classList.remove("hidden");
+    /*
+     * LOAD USER PROFILE
+     *
+     * Ini berjalan setelah Chat dibuka.
+     */
+
+    try {
+
+      const userRef =
+        doc(
+          db,
+          "users",
+          user.uid
+        );
 
 
-    updateProfileUI();
+      const snapshot =
+        await getDoc(userRef);
 
 
-  } catch (error) {
+      if (snapshot.exists()) {
 
-    console.error(
-      "AUTH STATE ERROR:",
-      error
-    );
+        me = {
+          uid: user.uid,
+          ...snapshot.data()
+        };
 
-    $("auth")?.classList.remove("hidden");
-    $("chat-app")?.classList.add("hidden");
+      } else {
 
-    setStatus(
-      firebaseError(error)
-    );
+        /*
+         * Kalau user document belum ada,
+         * buat otomatis.
+         */
+
+        await setDoc(
+          userRef,
+          {
+            uid: user.uid,
+
+            username:
+              me.username,
+
+            phone: "",
+
+            bio: "",
+
+            photoURL: "",
+
+            status: "online",
+
+            lastSeen:
+              serverTimestamp()
+
+          },
+          {
+            merge: true
+          }
+        );
+
+      }
+
+
+      updateProfileUI();
+
+
+    } catch (error) {
+
+      /*
+       * PENTING:
+       * FIRESTORE ERROR TIDAK BOLEH
+       * MEMBUAT USER LOGOUT.
+       */
+
+      console.warn(
+        "[PROFILE LOAD ERROR]",
+        error
+      );
+
+      updateProfileUI();
+
+    }
+
+
+    /*
+     * ONLINE STATUS
+     */
+
+    try {
+
+      await setDoc(
+        doc(
+          db,
+          "users",
+          user.uid
+        ),
+        {
+          status: "online",
+
+          lastSeen:
+            serverTimestamp()
+
+        },
+        {
+          merge: true
+        }
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "[ONLINE STATUS ERROR]",
+        error
+      );
+
+    }
 
   }
-
-});
+);
 
 
 /* =========================================================
@@ -567,40 +773,55 @@ function updateProfileUI() {
 
   if (!me) return;
 
+
   const username =
     me.username || "user";
 
+
   const avatar =
-    username.charAt(0).toUpperCase();
+    username
+      .charAt(0)
+      .toUpperCase();
 
 
   if ($("me-label")) {
+
     $("me-label").textContent =
       "@" + username;
+
   }
 
 
   if ($("profile-name")) {
+
     $("profile-name").textContent =
       "@" + username;
+
   }
 
 
   if ($("profile-avatar")) {
+
     $("profile-avatar").textContent =
       avatar;
+
   }
 
 
   if ($("profile-bio")) {
+
     $("profile-bio").textContent =
-      me.bio || "Belum ada bio.";
+      me.bio ||
+      "Belum ada bio.";
+
   }
 
 
   if ($("bio-input")) {
+
     $("bio-input").value =
       me.bio || "";
+
   }
 
 }
@@ -617,20 +838,55 @@ $("logout")?.addEventListener(
     try {
 
       if (unsubscribeMessages) {
+
         unsubscribeMessages();
+
         unsubscribeMessages = null;
+
       }
 
-      activeChat = null;
+
+      /*
+       * Update offline kalau bisa.
+       */
+
+      if (auth.currentUser) {
+
+        try {
+
+          await setDoc(
+            doc(
+              db,
+              "users",
+              auth.currentUser.uid
+            ),
+            {
+              status: "offline",
+              lastSeen:
+                serverTimestamp()
+            },
+            {
+              merge: true
+            }
+          );
+
+        } catch (_) {}
+
+      }
+
 
       await signOut(auth);
 
-      toast("Berhasil keluar.");
+
+      toast(
+        "Berhasil keluar."
+      );
+
 
     } catch (error) {
 
       console.error(
-        "LOGOUT ERROR:",
+        "[LOGOUT ERROR]",
         error
       );
 
@@ -645,7 +901,7 @@ $("logout")?.addEventListener(
 
 
 /* =========================================================
-   PROFILE
+   PROFILE OPEN
 ========================================================= */
 
 $("profile-btn")?.addEventListener(
@@ -653,35 +909,53 @@ $("profile-btn")?.addEventListener(
   () => {
 
     $("profile-panel")
-      ?.classList.remove("hidden");
+      ?.classList.remove(
+        "hidden"
+      );
 
   }
 );
 
+
+/* =========================================================
+   PROFILE CLOSE
+========================================================= */
 
 $("close-profile")?.addEventListener(
   "click",
   () => {
 
     $("profile-panel")
-      ?.classList.add("hidden");
+      ?.classList.add(
+        "hidden"
+      );
 
   }
 );
 
 
+/* =========================================================
+   SAVE PROFILE
+========================================================= */
+
 $("save-profile")?.addEventListener(
   "click",
   async () => {
 
-    if (!auth.currentUser || !me) {
-      toast("Belum login.");
+    if (!auth.currentUser) {
+
+      toast(
+        "Belum login."
+      );
+
       return;
     }
 
 
     const bio =
-      $("bio-input")?.value.trim() || "";
+      $("bio-input")
+        ?.value
+        .trim() || "";
 
 
     try {
@@ -701,17 +975,23 @@ $("save-profile")?.addEventListener(
       );
 
 
-      me.bio = bio;
+      if (me) {
+        me.bio = bio;
+      }
+
 
       updateProfileUI();
 
-      toast("Profil disimpan.");
+
+      toast(
+        "Profil disimpan."
+      );
 
 
     } catch (error) {
 
       console.error(
-        "PROFILE ERROR:",
+        "[SAVE PROFILE ERROR]",
         error
       );
 
@@ -729,8 +1009,9 @@ $("save-profile")?.addEventListener(
    NAVIGATION
 ========================================================= */
 
-document.querySelectorAll(".nav").forEach(
-  (button) => {
+document
+  .querySelectorAll(".nav")
+  .forEach((button) => {
 
     button.addEventListener(
       "click",
@@ -738,18 +1019,27 @@ document.querySelectorAll(".nav").forEach(
 
         document
           .querySelectorAll(".nav")
-          .forEach(
-            (item) =>
-              item.classList.remove("active")
-          );
+          .forEach((item) => {
+
+            item.classList.remove(
+              "active"
+            );
+
+          });
 
 
-        button.classList.add("active");
+        button.classList.add(
+          "active"
+        );
 
 
         const view =
           button.dataset.view;
 
+
+        /*
+         * CHATS
+         */
 
         $("conversation")
           ?.classList.toggle(
@@ -767,6 +1057,10 @@ document.querySelectorAll(".nav").forEach(
           );
 
 
+        /*
+         * STATUS
+         */
+
         $("status-view")
           ?.classList.toggle(
             "hidden",
@@ -774,12 +1068,20 @@ document.querySelectorAll(".nav").forEach(
           );
 
 
+        /*
+         * CHANNELS
+         */
+
         $("channels-view")
           ?.classList.toggle(
             "hidden",
             view !== "channels"
           );
 
+
+        /*
+         * GROUPS
+         */
 
         $("groups-view")
           ?.classList.toggle(
@@ -790,8 +1092,7 @@ document.querySelectorAll(".nav").forEach(
       }
     );
 
-  }
-);
+  });
 
 
 /* =========================================================
@@ -822,7 +1123,11 @@ $("user-search")?.addEventListener(
 
 
     if (!auth.currentUser || !me) {
-      toast("Login terlebih dahulu.");
+
+      toast(
+        "Login terlebih dahulu."
+      );
+
       return;
     }
 
@@ -831,18 +1136,25 @@ $("user-search")?.addEventListener(
 
       const usersQuery =
         query(
-          collection(db, "users"),
+          collection(
+            db,
+            "users"
+          ),
+
           where(
             "username",
             "==",
             username
           ),
+
           limit(1)
         );
 
 
       const snapshot =
-        await getDocs(usersQuery);
+        await getDocs(
+          usersQuery
+        );
 
 
       if (snapshot.empty) {
@@ -855,12 +1167,8 @@ $("user-search")?.addEventListener(
       }
 
 
-      const userDoc =
-        snapshot.docs[0];
-
-
       const user =
-        userDoc.data();
+        snapshot.docs[0].data();
 
 
       if (
@@ -882,10 +1190,9 @@ $("user-search")?.addEventListener(
     } catch (error) {
 
       console.error(
-        "SEARCH ERROR:",
+        "[SEARCH ERROR]",
         error
       );
-
 
       toast(
         firebaseError(error)
@@ -914,7 +1221,9 @@ function renderSearchResult(user) {
 
 
   const item =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   item.className =
@@ -922,54 +1231,90 @@ function renderSearchResult(user) {
 
 
   const avatar =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
+
 
   avatar.className =
     "avatar";
 
+
   avatar.textContent =
-    (user.username || "?")
+    (
+      user.username ||
+      "?"
+    )
       .charAt(0)
       .toUpperCase();
 
 
   const meta =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
+
 
   meta.className =
     "meta";
 
 
   const name =
-    document.createElement("strong");
+    document.createElement(
+      "strong"
+    );
+
 
   name.textContent =
-    "@" + (user.username || "user");
+    "@" +
+    (
+      user.username ||
+      "user"
+    );
 
 
   const bio =
-    document.createElement("small");
+    document.createElement(
+      "small"
+    );
+
 
   bio.textContent =
     user.bio ||
     "Mulai percakapan baru";
 
 
-  meta.appendChild(name);
-  meta.appendChild(bio);
+  meta.appendChild(
+    name
+  );
+
+  meta.appendChild(
+    bio
+  );
 
 
-  item.appendChild(avatar);
-  item.appendChild(meta);
+  item.appendChild(
+    avatar
+  );
+
+  item.appendChild(
+    meta
+  );
 
 
   item.addEventListener(
     "click",
-    () => openChat(user)
+    () => {
+
+      openChat(user);
+
+    }
   );
 
 
-  list.appendChild(item);
+  list.appendChild(
+    item
+  );
 
 }
 
@@ -1004,31 +1349,102 @@ function openChat(user) {
   activeChat = user;
 
 
+  /*
+   * UI
+   */
+
   $("empty-chat")
-    ?.classList.add("hidden");
+    ?.classList.add(
+      "hidden"
+    );
 
 
   $("conversation")
-    ?.classList.remove("hidden");
+    ?.classList.remove(
+      "hidden"
+    );
 
 
-  $("chat-name").textContent =
-    "@" + (user.username || "user");
+  $("status-view")
+    ?.classList.add(
+      "hidden"
+    );
 
 
-  $("chat-avatar").textContent =
-    (user.username || "?")
-      .charAt(0)
-      .toUpperCase();
+  $("channels-view")
+    ?.classList.add(
+      "hidden"
+    );
+
+
+  $("groups-view")
+    ?.classList.add(
+      "hidden"
+    );
+
+
+  document
+    .querySelectorAll(".nav")
+    .forEach((button) => {
+
+      button.classList.remove(
+        "active"
+      );
+
+    });
+
+
+  document
+    .querySelector(
+      '.nav[data-view="chats"]'
+    )
+    ?.classList.add(
+      "active"
+    );
+
+
+  /*
+   * HEADER CHAT
+   */
+
+  if ($("chat-name")) {
+
+    $("chat-name").textContent =
+      "@" +
+      (
+        user.username ||
+        "user"
+      );
+
+  }
+
+
+  if ($("chat-avatar")) {
+
+    $("chat-avatar").textContent =
+      (
+        user.username ||
+        "?"
+      )
+        .charAt(0)
+        .toUpperCase();
+
+  }
 
 
   if ($("chat-presence")) {
+
     $("chat-presence").textContent =
       user.status === "online"
         ? "online"
         : "offline";
+
   }
 
+
+  /*
+   * HENTIKAN LISTENER CHAT LAMA
+   */
 
   if (unsubscribeMessages) {
 
@@ -1039,11 +1455,18 @@ function openChat(user) {
   }
 
 
+  /*
+   * FIRESTORE MESSAGE COLLECTION
+   */
+
   const messagesRef =
     collection(
       db,
       "chats",
-      chatId(me.uid, user.uid),
+      chatId(
+        me.uid,
+        user.uid
+      ),
       "messages"
     );
 
@@ -1058,8 +1481,13 @@ function openChat(user) {
     );
 
 
+  /*
+   * REALTIME CHAT
+   */
+
   unsubscribeMessages =
     onSnapshot(
+
       messagesQuery,
 
       (snapshot) => {
@@ -1082,28 +1510,44 @@ function openChat(user) {
 
 
             const wrapper =
-              document.createElement("div");
+              document.createElement(
+                "div"
+              );
 
 
             wrapper.className =
               "message " +
               (
-                message.senderId === me.uid
+                message.senderId ===
+                me.uid
                   ? "mine"
                   : ""
               );
 
 
+            /*
+             * TEXT
+             */
+
             const text =
-              document.createElement("span");
+              document.createElement(
+                "span"
+              );
 
 
             text.textContent =
-              message.text || "";
+              message.text ||
+              "";
 
 
-            wrapper.appendChild(text);
+            wrapper.appendChild(
+              text
+            );
 
+
+            /*
+             * TIME
+             */
 
             if (
               message.createdAt &&
@@ -1112,7 +1556,9 @@ function openChat(user) {
             ) {
 
               const time =
-                document.createElement("time");
+                document.createElement(
+                  "time"
+                );
 
 
               time.textContent =
@@ -1127,35 +1573,44 @@ function openChat(user) {
                   );
 
 
-              wrapper.appendChild(time);
+              wrapper.appendChild(
+                time
+              );
 
             }
 
 
-            box.appendChild(wrapper);
+            box.appendChild(
+              wrapper
+            );
 
           }
         );
 
+
+        /*
+         * SCROLL KE BAWAH
+         */
 
         box.scrollTop =
           box.scrollHeight;
 
       },
 
+
       (error) => {
 
         console.error(
-          "MESSAGE LISTENER ERROR:",
+          "[MESSAGE LISTENER ERROR]",
           error
         );
-
 
         toast(
           firebaseError(error)
         );
 
       }
+
     );
 
 }
@@ -1174,7 +1629,9 @@ $("message-form")?.addEventListener(
 
     if (!auth.currentUser || !me) {
 
-      toast("Belum login.");
+      toast(
+        "Belum login."
+      );
 
       return;
     }
@@ -1195,7 +1652,9 @@ $("message-form")?.addEventListener(
 
 
     const text =
-      input?.value.trim() || "";
+      input
+        ?.value
+        .trim() || "";
 
 
     if (!text) {
@@ -1203,21 +1662,22 @@ $("message-form")?.addEventListener(
     }
 
 
-    const sendButton =
+    const button =
       $("message-form")
         ?.querySelector(
           'button[type="submit"]'
         );
 
 
-    if (sendButton) {
-      sendButton.disabled = true;
+    if (button) {
+      button.disabled = true;
     }
 
 
     try {
 
-      const messagesRef =
+      await addDoc(
+
         collection(
           db,
           "chats",
@@ -1226,44 +1686,48 @@ $("message-form")?.addEventListener(
             activeChat.uid
           ),
           "messages"
-        );
+        ),
 
-
-      await addDoc(
-        messagesRef,
         {
           text,
-          senderId: me.uid,
-          receiverId: activeChat.uid,
+
+          senderId:
+            me.uid,
+
+          receiverId:
+            activeChat.uid,
+
           createdAt:
             serverTimestamp()
         }
+
       );
 
 
       if (input) {
+
         input.value = "";
+
         input.focus();
+
       }
 
 
     } catch (error) {
 
       console.error(
-        "SEND MESSAGE ERROR:",
+        "[SEND MESSAGE ERROR]",
         error
       );
-
 
       toast(
         firebaseError(error)
       );
 
-
     } finally {
 
-      if (sendButton) {
-        sendButton.disabled = false;
+      if (button) {
+        button.disabled = false;
       }
 
     }
@@ -1273,7 +1737,7 @@ $("message-form")?.addEventListener(
 
 
 /* =========================================================
-   GLOBAL ERROR HANDLERS
+   GLOBAL ERROR HANDLER
 ========================================================= */
 
 window.addEventListener(
@@ -1281,8 +1745,9 @@ window.addEventListener(
   (event) => {
 
     console.error(
-      "GLOBAL JS ERROR:",
-      event.error || event.message
+      "[GLOBAL ERROR]",
+      event.error ||
+      event.message
     );
 
   }
@@ -1294,7 +1759,7 @@ window.addEventListener(
   (event) => {
 
     console.error(
-      "UNHANDLED PROMISE:",
+      "[UNHANDLED PROMISE]",
       event.reason
     );
 
@@ -1306,14 +1771,16 @@ window.addEventListener(
    START
 ========================================================= */
 
-setupAuthPersistence();
-
 console.log(
-  "%cMentra Chat",
-  "font-size:20px;font-weight:bold"
+  "%cMENTRA CHAT",
+  "font-size:20px;font-weight:800"
 );
 
 console.log(
   "Firebase:",
-  FIREBASE_CONFIG.projectId
+  firebaseConfig.projectId
+);
+
+console.log(
+  "Auth initialized."
 );
